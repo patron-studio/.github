@@ -10,8 +10,7 @@
 #     patron-studio/patron-ui \
 #     patron-studio/patron-emailer
 #
-# Requires: `gh` CLI authenticated with `admin:org` + `repo` scopes.
-# (If gh complains about scope, run: `gh auth refresh -h github.com -s admin:org,repo`)
+# Requires: `gh` CLI authenticated with `repo` scope.
 #
 # What gets applied to `main` on each repo:
 #   - Require a PR (no direct push)
@@ -37,23 +36,40 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+# `gh api -F field=` can't set fields to JSON null. The branch-protection
+# endpoint requires required_status_checks + restrictions to be null when
+# unused. Use JSON-on-stdin via `--input -` instead.
+read -r -d '' PROTECTION_JSON <<'JSON' || true
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": true,
+    "require_last_push_approval": false
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
+JSON
+
 for repo in "$@"; do
   echo "→ $repo ($BRANCH)"
-  gh api \
-    --method PUT \
-    "repos/$repo/branches/$BRANCH/protection" \
-    -F required_status_checks= \
-    -F enforce_admins=false \
-    -F 'required_pull_request_reviews[required_approving_review_count]=1' \
-    -F 'required_pull_request_reviews[dismiss_stale_reviews]=true' \
-    -F 'required_pull_request_reviews[require_code_owner_reviews]=true' \
-    -F 'required_pull_request_reviews[require_last_push_approval]=false' \
-    -F restrictions= \
-    -F required_linear_history=false \
-    -F allow_force_pushes=false \
-    -F allow_deletions=false \
-    -F required_conversation_resolution=true \
-    -F lock_branch=false \
-    -F allow_fork_syncing=false \
-    >/dev/null 2>&1 && echo "  ✓ protected" || echo "  ✗ failed (default branch missing? insufficient scope?)"
+  if printf '%s' "$PROTECTION_JSON" | gh api \
+       --method PUT \
+       --input - \
+       "repos/$repo/branches/$BRANCH/protection" \
+       >/dev/null 2>/tmp/protect-err-$$; then
+    echo "  ✓ protected"
+  else
+    echo "  ✗ failed:"
+    sed 's/^/      /' /tmp/protect-err-$$ | head -3
+  fi
+  rm -f /tmp/protect-err-$$
 done
