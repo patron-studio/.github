@@ -1,0 +1,51 @@
+# Dependabot configuration.
+#
+# Dependabot does NOT inherit from the org `.github` repo — every repo needs
+# its own `.github/dependabot.yml`. This file is the Patron Studio default;
+# copy-paste it into a new repo and adjust the directories / package-ecosystem
+# entries to match the repo's package manager and layout.
+#
+# See:
+#   https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # npm / pnpm / yarn dependencies. Most Patron Studio repos use pnpm but
+  # the `package-ecosystem: npm` value covers all three.
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: 'Europe/London'
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      prod-patches:
+        dependency-type: production
+        update-types:
+          - patch
+    ignore:
+      # Major bumps need manual review; humans handle them.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: 'Europe/London'
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - github-actions

@@ -1,0 +1,6 @@
+{
+  "name": "Semgrep Static Analysis",
+  "description": "Run Semgrep on PR + push to default branch, plus a weekly Monday scan. Uses the typescript / react / nextjs / owasp-top-ten / secrets rulesets. Exempt false positives via a .semgrepignore at the repo root.",
+  "iconName": "semgrep",
+  "categories": ["Code Quality", "Security"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Dependency Audit (pnpm)",
+  "description": "Run pnpm audit --audit-level=high on PRs against the default branch and weekly. Swap pnpm for npm/yarn in the workflow if the repo uses a different package manager.",
+  "iconName": "npm",
+  "categories": ["Security", "Dependencies"]
+}

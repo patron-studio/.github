@@ -1,0 +1,6 @@
+{
+  "name": "Gitleaks Secret Scan",
+  "description": "Scan every push and PR against the default branch for committed secrets (API keys, tokens, passwords). Requires GITLEAKS_LICENSE in repo secrets for org-private repos.",
+  "iconName": "gitleaks",
+  "categories": ["Security"]
+}

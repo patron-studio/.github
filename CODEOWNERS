@@ -1,0 +1,10 @@
+# Org-wide default CODEOWNERS for repositories in `patron-studio` that don't
+# define their own `.github/CODEOWNERS`.
+#
+# A per-repo CODEOWNERS file ALWAYS overrides this — see e.g.
+# patron-sales-dashboard for a repo with detailed path-specific owners.
+#
+# For "Require review from Code Owners" to actually block merges, branch
+# protection or a Repository Ruleset must be enabled on the target branch.
+
+*       @OliverBurns

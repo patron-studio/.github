@@ -1,0 +1,48 @@
+name: Semgrep
+
+on:
+  pull_request:
+    branches: [$default-branch]
+  push:
+    branches: [$default-branch]
+  schedule:
+    # Mondays at 07:30 UTC
+    - cron: '30 7 * * 1'
+
+jobs:
+  semgrep:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    # Skip on Dependabot PRs — they don't change app code, only deps
+    if: github.actor != 'dependabot[bot]'
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        # `semgrep ci` exits 1 on any findings by default. To exempt safe
+        # paths or false positives, add a `.semgrepignore` at the repo root.
+        run: |
+          semgrep ci \
+            --config=p/typescript \
+            --config=p/react \
+            --config=p/nextjs \
+            --config=p/owasp-top-ten \
+            --config=p/secrets
+        env:
+          # Optional: set SEMGREP_APP_TOKEN in repo secrets to publish findings
+          # to the free Semgrep dashboard.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Notify Slack on failure
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "🔴 *Semgrep failed*\nRepo: ${{ github.repository }}\nBranch/PR: ${{ github.event.pull_request.title || github.ref_name }}\nTriggered by: ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
