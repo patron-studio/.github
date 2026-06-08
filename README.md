@@ -4,14 +4,26 @@ Org-wide defaults for every repository in [`patron-studio`](https://github.com/p
 
 ## What lives here
 
-| Path                        | Purpose                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------------------- |
-| `profile/README.md`         | Public-facing org page README (visible at github.com/patron-studio)                               |
-| `SECURITY.md`               | Default vulnerability reporting policy. Picked up by any repo without its own `SECURITY.md`.      |
-| `PULL_REQUEST_TEMPLATE.md`  | Default PR template. Picked up by any repo without its own.                                       |
-| `CODEOWNERS`                | Default code owners fallback. Per-repo `CODEOWNERS` overrides.                                    |
-| `workflow-templates/`       | "Use this template" entries that appear under _Actions → New workflow → By patron-studio_.        |
-| `templates/`                | Copy-paste-able per-repo files that GitHub doesn't inherit (e.g. `dependabot.yml`).               |
+| Path                       | Purpose                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile/README.md`        | Public-facing org page README (visible at github.com/patron-studio)                                                                                 |
+| `SECURITY.md`              | Default vulnerability reporting policy. Picked up by any repo without its own `SECURITY.md`.                                                        |
+| `PULL_REQUEST_TEMPLATE.md` | Default PR template. Picked up by any repo without its own.                                                                                         |
+| `CODEOWNERS`               | Default code owners fallback. Per-repo `CODEOWNERS` overrides.                                                                                      |
+| `workflow-templates/`      | "Use this template" entries that appear under _Actions → New workflow → By patron-studio_.                                                          |
+| `templates/`               | Copy-paste-able per-repo files that GitHub doesn't inherit (e.g. `dependabot.yml`).                                                                 |
+| `.github/workflows/`       | Org-level automation that **runs in this repo** on a schedule (e.g. the Sentry triage poll). Unlike `workflow-templates/`, these actually run here. |
+| `scripts/`                 | Helpers for the above + admin tasks (`apply-branch-protection.sh`, `sentry-triage-poll.mjs`).                                                       |
+
+## Automation that runs here
+
+Most of this repo is passive (defaults GitHub inherits, templates other repos
+opt into). The exception is `.github/workflows/` — workflows that run **in this
+repo itself**, for genuinely org-level jobs that don't belong to any one product:
+
+- **[Sentry triage poll](docs/sentry-triage.md)** — scans every Sentry project
+  for production code defects and files Linear tickets for the auto-fix bot.
+  See the doc for the gate, provisioning (org secrets), and how to approve.
 
 ## How GitHub picks these up
 
