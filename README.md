@@ -11,6 +11,7 @@ Org-wide defaults for every repository in [`patron-studio`](https://github.com/p
 | `PULL_REQUEST_TEMPLATE.md`  | Default PR template. Picked up by any repo without its own.                                       |
 | `CODEOWNERS`                | Default code owners fallback. Per-repo `CODEOWNERS` overrides.                                    |
 | `workflow-templates/`       | "Use this template" entries that appear under _Actions → New workflow → By patron-studio_.        |
+| `.github/workflows/`        | Reusable workflows (`on: workflow_call`) that repos invoke via `uses:` — update once, all callers get it. |
 | `templates/`                | Copy-paste-able per-repo files that GitHub doesn't inherit (e.g. `dependabot.yml`).               |
 
 ## How GitHub picks these up
@@ -26,6 +27,44 @@ apply to every repo in the org that doesn't define its own.
 Workflow templates are different — they're a starting point only. They appear
 in the Actions UI when a user clicks "New workflow", but they're never
 automatically applied. Each repo opts in by adding the workflow file itself.
+
+## Reusable workflows
+
+Unlike `workflow-templates/` (copied once, then diverge), reusable workflows in
+`.github/workflows/` are referenced live — update them here and every caller
+picks up the change on its next run.
+
+| Workflow | Purpose |
+| --- | --- |
+| `claude-pr-review.yml` | Read-only Claude PR-review bot. Reads the calling repo's `CLAUDE.md` + `.claude/agents/*.md` and posts inline comments. Informational — never make it a required check. |
+
+Call it from a repo with a thin caller workflow (note the doubled `.github` in
+the path):
+
+```yaml
+# .github/workflows/claude-pr-review.yml in the calling repo
+name: Claude PR Review
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+    branches: [main]
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+jobs:
+  review:
+    uses: patron-studio/.github/.github/workflows/claude-pr-review.yml@v1
+    secrets: inherit
+```
+
+**Pin to a tag, not `@main`.** Reusable workflows are versioned with git tags on
+this repo — callers pin `@v1`. Cut a `v1` tag (and move it forward on breaking
+changes) so callers get a stable contract.
+
+**Secrets.** `claude-pr-review.yml` needs `CLAUDE_CODE_OAUTH_TOKEN` (and
+optionally `SLACK_WEBHOOK_URL`). Set these as **org-level secrets** with
+`--visibility all` so every repo inherits them via `secrets: inherit`.
 
 ## What this _doesn't_ cover
 
