@@ -13,7 +13,6 @@ and the shared design / engineering systems that power them.
 - **patron-ui** — shadcn-style component registry used across client sites
   and internal tools.
 - **patron-emailer** — email marketing toolkit and renderer.
-- **renovate-config** — shared dependency-update configuration extended by
   every client repo.
 
 ## Security
