@@ -5,6 +5,11 @@
 # copy-paste it into a new repo and adjust the directories / package-ecosystem
 # entries to match the repo's package manager and layout.
 #
+# Tuned to be low-noise: monthly cadence, everything bundled into ONE grouped
+# PR per ecosystem (so at most ~2 PRs a month), majors held back for manual
+# review, and rebasing disabled so open PRs don't re-trigger CI / Slack
+# notifications on every push to the base branch.
+#
 # See:
 #   https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
@@ -15,37 +20,41 @@ updates:
   - package-ecosystem: npm
     directory: '/'
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: '07:00'
       timezone: 'Europe/London'
     open-pull-requests-limit: 5
+    rebase-strategy: disabled
     labels:
       - dependencies
     groups:
-      dev-dependencies:
-        dependency-type: development
+      # Every non-major npm update across the workspace lands in ONE PR.
+      npm:
+        patterns:
+          - '*'
         update-types:
           - minor
-          - patch
-      prod-patches:
-        dependency-type: production
-        update-types:
           - patch
     ignore:
       # Major bumps need manual review; humans handle them.
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
-  # GitHub Actions versions
+  # GitHub Actions versions — all bumps bundled into a single PR.
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: '07:00'
       timezone: 'Europe/London'
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
     labels:
       - dependencies
       - github-actions
+    groups:
+      github-actions:
+        patterns:
+          - '*'
