@@ -7,8 +7,7 @@
 # Example:
 #   scripts/apply-branch-protection.sh \
 #     patron-studio/patron-sales-dashboard \
-#     patron-studio/patron-ui \
-#     patron-studio/patron-emailer
+#     patron-studio/patron-ui
 #
 # Requires: `gh` CLI authenticated with `repo` scope.
 #
