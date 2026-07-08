@@ -72,7 +72,7 @@ jobs:
     steps:
       # Check out the PR head in both modes: the event SHA for pull_request, or
       # the refs/pull/<N>/head ref for a manual dry-run.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', inputs.pr_number) }}
           fetch-depth: 0
@@ -143,7 +143,7 @@ jobs:
 
       - name: Notify Slack — review run failed
         if: ${{ (failure() || cancelled()) && env.SLACK_WEBHOOK_URL != '' }}
-        uses: slackapi/slack-github-action@v2
+        uses: slackapi/slack-github-action@v3
         with:
           webhook: ${{ env.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
