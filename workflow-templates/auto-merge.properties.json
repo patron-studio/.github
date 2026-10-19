@@ -1,0 +1,6 @@
+{
+  "name": "Auto-merge dev and staging PRs",
+  "description": "Arms auto-merge (merge commit) on every non-draft, human-authored PR into dev or staging. The merge lands once the branch ruleset's required checks pass.",
+  "iconName": "octicon git-merge",
+  "categories": ["Automation"]
+}

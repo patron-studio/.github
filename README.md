@@ -66,10 +66,17 @@ changes) so callers get a stable contract.
 optionally `SLACK_WEBHOOK_URL`). Set these as **org-level secrets** with
 `--visibility all` so every repo inherits them via `secrets: inherit`.
 
+## Repo standard
+
+Every repo's branch and merge rules come from
+[`docs/repo-standard.md`](docs/repo-standard.md): PRs into `main` with `CI` +
+`Gitleaks`, merge commits only, auto-merge on `dev` and `staging`, and a
+bypass that only a maintainer can use, by ticking it on a PR. Apply or check a
+repo with `scripts/apply-repo-standard.sh` (dry run by default).
+
 ## What this _doesn't_ cover
 
 - **Dependabot** — config is per-repo. The `templates/dependabot.yml` file is a
   copy-paste starter, not an inherited default.
-- **Branch protection** — set per-repo or via org-level
-  [Repository Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets).
-- **Required workflows** — also via Rulesets, separately from the templates here.
+- **Required workflows** — Enterprise-only for private repos; each repo adds
+  its own workflows (see the rollout order in `docs/repo-standard.md`).
