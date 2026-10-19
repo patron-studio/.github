@@ -2,8 +2,8 @@ name: Auto-merge
 
 # Arms GitHub auto-merge (merge commit) on every non-draft, human-authored PR
 # into dev or staging when it's opened, reopened or marked ready for review.
-# The merge happens once the "Protect dev and staging" ruleset's required
-# checks pass: this workflow is the trigger, the ruleset is the gate.
+# dev and staging have no required checks (the team pushes to them directly),
+# so the PR merges as soon as it's mergeable.
 #
 # Merge commit, never squash: a squashed branch that's later promoted
 # conflicts on every file both sides touched (docs/repo-standard.md in

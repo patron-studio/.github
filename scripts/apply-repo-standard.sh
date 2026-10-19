@@ -11,9 +11,9 @@
 #     CI + Gitleaks check runs from GitHub Actions, no deletion or force push.
 #     Bypass: the maintainers team in pull_request mode (a deliberate tick on
 #     a PR in GitHub; no direct pushes).
-#   - "Protect dev and staging" ruleset: PR, merge commit only, required
-#     Gitleaks, no deletion or force push. Repo admins bypass always, so they
-#     can push directly (slvrlake's /propagate). Replaces a "Protect dev" one.
+#   - "Protect dev and staging" ruleset: no deletion or force push, nothing
+#     else. Everyone on the team pushes to them directly; PRs into them
+#     auto-merge (auto-merge.yml). Replaces a "Protect dev" one.
 #   - Classic branch protection on main removed; the rulesets replace it.
 #   - Repo settings: auto-merge on, merge commits on, squash and rebase off.
 #
@@ -38,7 +38,6 @@ fi
 
 ACTIONS_APP_ID=15368         # GitHub Actions: only its check runs count
 MAINTAINERS_TEAM_ID=16507662 # patron-studio/maintainers (Oliver)
-ADMIN_ROLE_ID=5              # the Repository admin role
 
 MAIN_RULESET=$(jq -n --argjson app "$ACTIONS_APP_ID" --argjson team "$MAINTAINERS_TEAM_ID" '{
   name: "Protect main",
@@ -65,26 +64,17 @@ MAIN_RULESET=$(jq -n --argjson app "$ACTIONS_APP_ID" --argjson team "$MAINTAINER
   ]
 }')
 
-WORKING_RULESET=$(jq -n --argjson app "$ACTIONS_APP_ID" --argjson role "$ADMIN_ROLE_ID" '{
+# Everyone pushes to dev and staging directly; only deletion and force pushes
+# are blocked. A PR rule or required check here would block direct pushes.
+WORKING_RULESET=$(jq -n '{
   name: "Protect dev and staging",
   target: "branch",
   enforcement: "active",
   conditions: { ref_name: { include: ["refs/heads/dev", "refs/heads/staging"], exclude: [] } },
-  bypass_actors: [{ actor_id: $role, actor_type: "RepositoryRole", bypass_mode: "always" }],
+  bypass_actors: [],
   rules: [
     { type: "deletion" },
-    { type: "non_fast_forward" },
-    { type: "pull_request", parameters: {
-        required_approving_review_count: 0,
-        dismiss_stale_reviews_on_push: false,
-        require_code_owner_review: false,
-        require_last_push_approval: false,
-        required_review_thread_resolution: false,
-        allowed_merge_methods: ["merge"] } },
-    { type: "required_status_checks", parameters: {
-        strict_required_status_checks_policy: false,
-        do_not_enforce_on_create: false,
-        required_status_checks: [{ context: "Gitleaks", integration_id: $app }] } }
+    { type: "non_fast_forward" }
   ]
 }')
 

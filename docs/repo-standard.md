@@ -11,13 +11,17 @@ Never hand-edit a repo's rulesets.
 | Branch                | Rule                                                                                                        |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `main`                | PR required, 0 approvals, merge commit only, `CI` + `Gitleaks` must pass. No deletion, no force push.       |
-| `dev`, `staging`      | PR required, merge commit only, `Gitleaks` must pass. PRs auto-merge once green. Repo admins push directly. |
+| `dev`, `staging`      | Everyone on the team pushes directly. No deletion, no force push. A PR into them auto-merges.               |
 | `release/*` etc.      | No deletion, no force push (`protect-long-lived-branches`, see [branch-hygiene.md](branch-hygiene.md)).     |
 
 - **Merge commits everywhere, never squash or rebase.** Squashing a branch that
   is later promoted rewrites its commits under new SHAs, so the next promotion
   conflicts on every file both sides touched (omkai, 14 Sep 2026: eight
   conflicts). A single rule is also one less thing to get wrong.
+- **Only `main` is gated.** `dev` and `staging` take direct pushes from anyone
+  on the team (Oliver, 19 Oct 2026). Local hooks are their quality gate, and
+  Gitleaks still scans every push. Any PR rule or required check on them would
+  block those pushes.
 - **No classic branch protection.** Rulesets only, so `gh api .../rulesets`
   shows every rule. Classic protection layered underneath once held a release
   on a hidden conversation-resolution rule (airo #500).
@@ -77,5 +81,4 @@ Order matters: requiring a check that nothing reports blocks every merge.
 
 - **slvrlake** works main-first. Its `/sync` command used to push `main`
   directly; under this standard it opens a PR into `main` (auto-merged once
-  green), then runs `/propagate` to push `staging` and `dev`, which admins may
-  push directly.
+  green), then runs `/propagate` to push `staging` and `dev` directly.
