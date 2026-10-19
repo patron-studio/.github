@@ -41,10 +41,10 @@ be on so new repos inherit the setting.
 
 ## 3. (Already covered) Branch protection
 
-For per-repo branch protection on `main`, use the script in
-`scripts/apply-branch-protection.sh`. Org-level Repository Rulesets that
-apply to private repos are an Enterprise-only feature, so per-repo
-protection is the practical path on the Team plan.
+Branch and merge rules follow [repo-standard.md](repo-standard.md), applied
+per repo with `scripts/apply-repo-standard.sh`. Org-level Repository Rulesets
+that apply to private repos are an Enterprise-only feature, so per-repo
+rulesets are the practical path on the Team plan.
 
 ## What's not enabled at the org level
 

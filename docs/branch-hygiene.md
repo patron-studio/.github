@@ -7,7 +7,7 @@ matter.
 There are three pieces. **None of them are inherited automatically by other
 repos.** The scripts live here as the source of truth, but each must be _run
 against a repo_ to take effect — same model as
-[`scripts/apply-branch-protection.sh`](../scripts/apply-branch-protection.sh).
+[`scripts/apply-repo-standard.sh`](../scripts/apply-repo-standard.sh).
 
 ## 1. Auto-delete merged branches — `scripts/set-auto-delete.sh`
 

@@ -1,0 +1,60 @@
+# Paste into a repo's ci.yml (on: pull_request into main) above the `ci` job,
+# then give the `ci` job:
+#
+#   ci:
+#     name: CI
+#     needs: local-ci
+#     # !cancelled(): with a bare `needs`, a failed local-ci job would skip CI,
+#     # and a skipped required check counts as passing.
+#     if: ${{ !cancelled() && needs.local-ci.outputs.verified != 'true' }}
+#
+# Any job that `needs: ci` must accept a skipped CI:
+#   if: ${{ !cancelled() && (needs.ci.result == 'success' || needs.ci.result == 'skipped') }}
+#
+# If ci.yml also runs on push, add `if: ${{ github.event_name == 'pull_request' }}`
+# to local-ci and name the push run differently so it can't stand in for the
+# required check: name: ${{ github.event_name == 'push' && 'CI (dev early warning)' || 'CI' }}
+#
+# Pin actions/checkout to the same SHA the repo's other jobs use.
+
+jobs:
+  # Fast path: `pnpm ci:local` (scripts/ci-local.sh) records a `local-ci`
+  # status on the commit it tested. Trusts only statuses created by
+  # OliverBurns: nobody else's token can write one as him. Any error here
+  # falls through to a full CI run.
+  local-ci:
+    name: Local CI pass
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      statuses: read
+    outputs:
+      verified: ${{ steps.check.outputs.verified }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The PR merge commit and its parents, to compare trees.
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Look for a local CI pass on the PR head
+        id: check
+        # A failure here must not go red (the merge guard blocks on red
+        # checks); it leaves `verified` unset, so CI runs in full.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/statuses" \
+            --jq '[.[] | select(.context == "local-ci" and .creator.login == "OliverBurns")][0].state // ""')
+          if [ "$state" != success ]; then
+            echo 'No local CI pass on this commit; running CI in full.'
+          elif [ "$(git rev-parse 'HEAD^{tree}')" != "$(git rev-parse "$HEAD_SHA^{tree}")" ]; then
+            echo '::notice::Merging into main changes what was tested locally; running CI in full.'
+          else
+            echo 'verified=true' >> "$GITHUB_OUTPUT"
+            echo "::notice::pnpm ci:local passed on ${HEAD_SHA:0:8}; skipping the GitHub CI run."
+          fi
