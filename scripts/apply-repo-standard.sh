@@ -17,9 +17,9 @@
 #   - Classic branch protection on main removed; the rulesets replace it.
 #   - Repo settings: auto-merge on, merge commits on, squash and rebase off.
 #
-# Refuses a repo until its workflows are rolled out: CI and Gitleaks reported
-# (a required check nothing reports blocks every merge), the local-ci fast
-# path, the auto-merge workflow, and no squash merges.
+# Refuses a repo until dev or main carries the standard workflows: CI and
+# Gitleaks reported (a required check nothing reports blocks every merge), the
+# local-ci fast path, the auto-merge workflow, and no squash merges.
 #
 # Requires: gh authenticated as an org admin. Claude's auto mode blocks it
 # from running --apply, so run that yourself.
@@ -101,17 +101,31 @@ normalise() {
       required_review_thread_resolution } else . end]}'
 }
 
-# Every workflow file on main and dev (when it exists), concatenated.
+# Every workflow file on one branch, concatenated.
 workflows() {
-  local repo=$1 ref path paths
-  for ref in main dev; do
-    gh api "repos/$repo/branches/$ref" >/dev/null 2>&1 || continue
-    paths=$(gh api "repos/$repo/contents/.github/workflows?ref=$ref" --jq '.[].path' 2>/dev/null) || continue
-    for path in $paths; do
-      gh api -H 'Accept: application/vnd.github.raw' "repos/$repo/contents/$path?ref=$ref"
-      echo
-    done
+  local repo=$1 ref=$2 path paths
+  paths=$(gh api "repos/$repo/contents/.github/workflows?ref=$ref" --jq '.[].path' 2>/dev/null) || return 0
+  for path in $paths; do
+    gh api -H 'Accept: application/vnd.github.raw' "repos/$repo/contents/$path?ref=$ref"
+    echo
   done
+}
+
+# Prints what a branch's workflows lack for the standard, joined by "; ".
+# PRs run the workflows from their own branch, so the branch work starts
+# from (dev for omkai and airo, main for slvrlake) is the one that counts.
+missing_on() {
+  local wf
+  wf=$(workflows "$1" "$2")
+  local missing=()
+  # `name: CI`, or a computed name that resolves to 'CI'.
+  grep -qE "^ *name: *CI *$|'CI'" <<<"$wf" || missing+=("a job named CI")
+  grep -qE "name: *Gitleaks" <<<"$wf" || missing+=("a job named Gitleaks")
+  grep -qE "^ *local-ci:" <<<"$wf" || missing+=("the local-ci fast-path job")
+  grep -q -- "--auto --merge" <<<"$wf" || missing+=("the auto-merge workflow")
+  grep -q -- "--squash" <<<"$wf" && missing+=("no --squash merges (found one)")
+  # The +-guard: macOS bash 3.2 treats an empty array as unset under set -u.
+  (IFS=';'; echo "${missing[*]+${missing[*]}}")
 }
 
 # Creates or updates the ruleset matching one of `names` (a jq IN() list).
@@ -148,19 +162,23 @@ failed=0
 for repo in "$@"; do
   echo "→ $repo"
 
-  wf=$(workflows "$repo")
-  missing=()
-  # `name: CI`, or a computed name that resolves to 'CI'.
-  grep -qE "^ *name: *CI *$|'CI'" <<<"$wf" || missing+=("a job named CI")
-  grep -qE "name: *Gitleaks" <<<"$wf" || missing+=("a job named Gitleaks")
-  grep -qE "^ *local-ci:" <<<"$wf" || missing+=("the local-ci fast-path job")
-  grep -q -- "--auto --merge" <<<"$wf" || missing+=("the auto-merge workflow")
-  grep -q -- "--squash" <<<"$wf" && missing+=("no --squash merges (found one)")
-  if [ "${#missing[@]}" -gt 0 ]; then
-    printf '  ✗ skipped: workflows on main/dev need %s. Roll out the workflows first (docs/repo-standard.md).\n' "$(IFS=';'; echo "${missing[*]}")"
+  ready=""
+  report=()
+  for ref in dev main; do
+    gh api "repos/$repo/branches/$ref" >/dev/null 2>&1 || continue
+    gaps=$(missing_on "$repo" "$ref")
+    if [ -z "$gaps" ]; then
+      ready=$ref
+      break
+    fi
+    report+=("$ref needs $gaps")
+  done
+  if [ -z "$ready" ]; then
+    printf '  ✗ skipped: %s. Roll out the workflows first (docs/repo-standard.md).\n' "$(IFS=';'; echo "${report[*]-no dev or main branch}")"
     failed=1
     continue
   fi
+  echo "  = workflows: standard on $ready"
 
   upsert "$repo" "$MAIN_RULESET" '"Protect main"'
   upsert "$repo" "$WORKING_RULESET" '"Protect dev and staging", "Protect dev"'
