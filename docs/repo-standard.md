@@ -50,13 +50,14 @@ Templates: [`templates/local-ci/`](../templates/local-ci/).
 
 | Tier         | Repos                                                                                                                          | What they get                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| **Full**     | omkai, airo-storefront, slvrlake, turbo-next-sanity-boilerplate, companion, at-rare, at-trayler, colours-agency, johns-and-co, jelly, think-artfully, tbm-group, snyder, futura-post, dawn-website, chm-website | All of the above |
-| **Baseline** | at-collective, foster-son-store, foster-dev, johns-and-co_AWS, maintenance-orchestrator | `protect-long-lived-branches` only; no CI gate |
+| **Full**     | omkai, airo-storefront, slvrlake, turbo-next-sanity-boilerplate, companion, at-rare, at-trayler, colours-agency, johns-and-co, jelly, think-artfully, tbm-group, snyder, futura-post, dawn-website | All of the above |
+| **Baseline** | at-collective, chm-website, foster-son-store, foster-dev, johns-and-co_AWS, maintenance-orchestrator | `protect-long-lived-branches` only; no CI gate |
 
 Full is every repo that had commits in the 30 days to 19 Oct 2026 and has lint
 or typecheck scripts to run, plus every client repo on a support contract,
 however quiet (Oliver, 22 Oct 2026: at-trayler, tbm-group, snyder, futura-post,
-dawn-website). The boilerplate is included because every new site starts from
+dawn-website). chm-website is Baseline: CHM is no longer a supported client
+(22 Oct 2026). The boilerplate is included because every new site starts from
 it. A baseline repo moves to Full when work on it restarts.
 
 ## Rolling out to a repo
