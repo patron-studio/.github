@@ -11,9 +11,8 @@
 # Any job that `needs: ci` must accept a skipped CI:
 #   if: ${{ !cancelled() && (needs.ci.result == 'success' || needs.ci.result == 'skipped') }}
 #
-# If ci.yml also runs on push, add `if: ${{ github.event_name == 'pull_request' }}`
-# to local-ci and name the push run differently so it can't stand in for the
-# required check: name: ${{ github.event_name == 'push' && 'CI (dev early warning)' || 'CI' }}
+# ci.yml runs on pull_request into main only, never on push
+# (docs/ci-standard.md).
 #
 # Pin actions/checkout to the same SHA the repo's other jobs use.
 

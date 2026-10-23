@@ -1,34 +1,42 @@
 name: Secret Scan
 
+# Every branch push scans the commits it adds. PRs into main scan too: the
+# required "Gitleaks" check must sit on the release PR's head SHA, and that
+# SHA can have no push run, because a PR that auto-merge.yml lands in dev is
+# merged by github-actions[bot] and GITHUB_TOKEN pushes start no workflows.
+# Secrets already in history are not rescanned. False positives go in
+# .gitleaksignore.
+#
+# No Slack notifications, deliberately.
+
 on:
   push:
     branches: ['**']
   pull_request:
-    branches: [$default-branch]
+    branches: [main]
+
+# A newer push to the same branch supersedes the in-flight scan.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   gitleaks:
     name: Gitleaks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # GITLEAKS_LICENSE is required for org-private repos with paid plan.
-          # If unset on a free-tier repo, the action will skip with a warning.
+          # Org secret; required for org-owned repos.
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-
-      - name: Notify Slack on failure
-        if: failure()
-        uses: slackapi/slack-github-action@v3
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            text: "🔴 *Gitleaks found secrets*\nRepo: ${{ github.repository }}\nBranch/PR: ${{ github.event.pull_request.title || github.ref_name }}\nTriggered by: ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"

@@ -6,6 +6,8 @@ One set of branch and merge rules for every `patron-studio` repo, modelled on
 to the standard is a PR here, followed by re-running the script on every repo.
 Never hand-edit a repo's rulesets.
 
+What CI runs, and how cheaply, is in [ci-standard.md](ci-standard.md).
+
 ## The rules
 
 | Branch                | Rule                                                                                                        |
@@ -63,10 +65,13 @@ Order matters: requiring a check that nothing reports blocks every merge.
 
 1. PR into the repo's working branch, adding the workflows if missing:
    - `ci.yml` with a job named `CI` on PRs into `main`, plus the `local-ci` job
-   - `secret-scan.yml` (job `Gitleaks`, every push)
+   - `secret-scan.yml` (job `Gitleaks`, every push and PRs into `main`)
    - `semgrep.yml` on PRs into `main`
    - [`auto-merge.yml`](../workflow-templates/auto-merge.yml)
    - `scripts/ci-local.sh` with a `ci:local` package script
+
+   `scripts/audit-ci.sh patron-studio/<repo>` checks them against
+   [ci-standard.md](ci-standard.md).
 2. Once those workflows are on the working branch and `main`, run the script as
    a dry run, check the diff, then run it with `--apply`:
    ```bash
