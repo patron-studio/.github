@@ -64,15 +64,51 @@ something to ship, not after every dev merge.
   never start when CI has already failed.
 - **Caches:**
   - The pnpm store: `actions/setup-node` with `cache: pnpm`.
-  - Turbo: Vercel Remote Cache, with a `TURBO_TOKEN` secret and a
-    `TURBO_TEAM` variable. Packages a release didn't touch then replay instead
-    of re-running. `actions/cache` can't do this: each release is a new PR,
-    and a PR run can restore only its own caches and `main`'s. Under this
-    standard nothing runs Turbo on `main`.
+  - Turbo: Vercel Remote Cache (see below). Packages a release didn't touch
+    replay instead of re-running. `actions/cache` can't do this: each release
+    is a new PR, and a PR run can restore only its own caches and `main`'s.
 - **Docs-only changes skip the advisory workflows** (`paths-ignore`). Required
   checks can't use path filters, because a check that never reports blocks the
   merge.
 - **Slack hears only about failures.**
+
+## Turbo Remote Cache
+
+Every repo with a `turbo.json` uses Vercel Remote Cache in each CI job that
+runs `turbo`. It's free, and the cache lives in the `patron` Vercel team
+whichever team deploys the site. CI authenticates over OIDC, so no token is
+stored anywhere.
+
+1. **Vercel (once per repo, team owner):** `patron` team → Settings → Build and
+   Deployment → OIDC Policies for CLI Access → Turborepo CLI Policies → Add.
+   Pick GitHub, the `patron-studio` account and the repo. If the form lets one
+   policy cover every `patron-studio` repo, use that instead and skip this
+   step for later repos.
+2. **GitHub (once, done):** the org Actions variable `TURBO_TEAM=patron`, which
+   every repo inherits.
+3. **ci.yml:** give each job that runs `turbo` `id-token: write` (next to
+   `contents: read`), and add this step after the install:
+
+   ```yaml
+   # Vercel Remote Cache over OIDC (patron-studio/.github docs/ci-standard.md).
+   # A failed exchange falls back to a cold run instead of failing the job.
+   - name: Set up Turborepo Remote Cache
+     if: vars.TURBO_TEAM != ''
+     continue-on-error: true
+     uses: vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f # v1.1.0
+     with:
+       team: ${{ vars.TURBO_TEAM }}
+   ```
+
+   Drop any `TURBO_TOKEN` secret wiring: the action sets `TURBO_TOKEN` and
+   `TURBO_TEAM` for later steps, and revokes the token when the job ends.
+
+   Leave the step out of a job that builds against live CMS content for E2E
+   (airo's Build + E2E). The content isn't a Turbo input, so a replayed build
+   would test stale pages.
+
+`scripts/audit-ci.sh` flags a Turbo repo whose `ci.yml` doesn't have the step
+yet. That flag is the reminder for repos still to do.
 
 ## Workflow templates
 
