@@ -103,6 +103,10 @@ stored anywhere.
    Drop any `TURBO_TOKEN` secret wiring: the action sets `TURBO_TOKEN` and
    `TURBO_TEAM` for later steps, and revokes the token when the job ends.
 
+   Leave the step out of a job that builds against live CMS content for E2E
+   (airo's Build + E2E). The content isn't a Turbo input, so a replayed build
+   would test stale pages.
+
 `scripts/audit-ci.sh` flags a Turbo repo whose `ci.yml` doesn't have the step
 yet. That flag is the reminder for repos still to do.
 
