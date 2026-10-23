@@ -17,6 +17,7 @@
 #   - every job sets timeout-minutes
 #   - every workflow a newer push or PR update can supersede sets a
 #     concurrency group
+#   - a repo with a turbo.json uses Vercel Remote Cache in ci.yml
 #   - no CodeQL (it needs a paid Code Security licence on private repos)
 #   - every deployment_status job without `needs` filters on the deployment
 #     in its `if:`, so no runner starts for deploys it ignores
@@ -71,6 +72,9 @@ ARGV.each do |path|
   case name
   when "ci.yml"
     puts "#{name}: must run only on pull_request into main (has: #{on.keys.join(", ")})" unless only_prs_into_main(on)
+    if ENV["TURBO_REPO"] == "1" && !File.read(path).include?("vercel/setup-turborepo-remote-cache-action")
+      puts "#{name}: Turbo repo without Vercel Remote Cache (docs/ci-standard.md#turbo-remote-cache)"
+    end
   when "semgrep.yml"
     # A weekly full scan is allowed; it catches new rules on unchanged code.
     puts "#{name}: must run only on pull_request into main (has: #{on.keys.join(", ")})" unless only_prs_into_main(on, %w[schedule])
@@ -134,7 +138,9 @@ for REPO in "$@"; do
   for required in ci.yml secret-scan.yml semgrep.yml auto-merge.yml; do
     [ -f "$dir/$required" ] || echo "missing $required" >>"$dir/.violations"
   done
-  ruby -e "$CHECK" "$dir"/*.y*ml >>"$dir/.violations"
+  turbo=0
+  gh api "repos/$REPO/contents/turbo.json?ref=$ref" >/dev/null 2>&1 && turbo=1
+  TURBO_REPO=$turbo ruby -e "$CHECK" "$dir"/*.y*ml >>"$dir/.violations"
 
   if [ -s "$dir/.violations" ]; then
     echo "✗ $REPO@$ref"
