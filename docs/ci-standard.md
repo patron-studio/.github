@@ -75,15 +75,17 @@ something to ship, not after every dev merge.
 ## Turbo Remote Cache
 
 Every repo with a `turbo.json` uses Vercel Remote Cache in each CI job that
-runs `turbo`. It's free, and the cache lives in the `patron` Vercel team
+runs `turbo`. On the boilerplate, lint, typecheck and test went from 43s to
+1.1s on a warm cache. It's free, and the cache lives in the `patron` Vercel team
 whichever team deploys the site. CI authenticates over OIDC, so no token is
 stored anywhere.
 
-1. **Vercel (once per repo, team owner):** `patron` team → Settings → Build and
-   Deployment → OIDC Policies for CLI Access → Turborepo CLI Policies → Add.
-   Pick GitHub, the `patron-studio` account and the repo. If the form lets one
-   policy cover every `patron-studio` repo, use that instead and skip this
-   step for later repos.
+1. **Vercel (once, done):** the `patron` team has one Turborepo CLI OIDC
+   policy, "patron-studio GitHub Actions" (Settings → Build and Deployment →
+   OIDC Policies for CLI Access). It covers `patron-studio/*` with any
+   workflow, any branch and the default audience, so new repos need nothing
+   on the Vercel side. Don't add a second policy that also matches: the
+   action would then need a `policy` ID to choose between them.
 2. **GitHub (once, done):** the org Actions variable `TURBO_TEAM=patron`, which
    every repo inherits.
 3. **ci.yml:** give each job that runs `turbo` `id-token: write` (next to
