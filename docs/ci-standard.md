@@ -62,12 +62,13 @@ something to ship, not after every dev merge.
 - **One job per gate, sharing one install.** Each parallel job pays its own
   setup, install and rounding. Heavy jobs (build, E2E) use `needs: ci`, so they
   never start when CI has already failed.
-- **Cache everything that's keyed on a lockfile or version:**
-  - the pnpm store, with `actions/setup-node` and `cache: pnpm`
-  - Turbo's `.turbo/cache`, with `actions/cache` keyed on the commit SHA and
-    restoring the newest entry, so packages a release didn't touch replay
-    instead of re-running
-  - Playwright's browsers, keyed on the Playwright version
+- **Caches:**
+  - The pnpm store: `actions/setup-node` with `cache: pnpm`.
+  - Turbo: Vercel Remote Cache, with a `TURBO_TOKEN` secret and a
+    `TURBO_TEAM` variable. Packages a release didn't touch then replay instead
+    of re-running. `actions/cache` can't do this: each release is a new PR,
+    and a PR run can restore only its own caches and `main`'s. Under this
+    standard nothing runs Turbo on `main`.
 - **Docs-only changes skip the advisory workflows** (`paths-ignore`). Required
   checks can't use path filters, because a check that never reports blocks the
   merge.
