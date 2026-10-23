@@ -11,7 +11,7 @@
 # Checks:
 #   - ci.yml runs only on pull_request into main (no push, no other bases)
 #   - secret-scan.yml has a Gitleaks job, runs on every push and on PRs into
-#     main
+#     main, and can read PRs
 #   - semgrep.yml runs only on pull_request into main (plus an optional
 #     weekly schedule)
 #   - every job sets timeout-minutes
@@ -80,6 +80,10 @@ ARGV.each do |path|
     puts "#{name}: must run on push to every branch ('**')" unless push == ["**"]
     puts "#{name}: must also run on pull_request into main (a bot-merged release head has no push run)" unless pr == ["main"]
     puts "#{name}: needs a job named Gitleaks (the required check)" unless jobs.values.any? { |j| j["name"] == "Gitleaks" }
+    perms = doc["permissions"]
+    if perms.is_a?(Hash) && !%w[read write].include?(perms["pull-requests"])
+      puts "#{name}: needs pull-requests: read (gitleaks-action lists a PR's commits; without it the PR run fails with a 403)"
+    end
   end
 
   if File.read(path).include?("github/codeql-action")
