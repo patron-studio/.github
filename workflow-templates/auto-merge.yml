@@ -25,6 +25,7 @@ jobs:
   enable-auto-merge:
     name: Enable auto-merge
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event.pull_request.draft == false && github.event.pull_request.user.type != 'Bot'
     steps:
       - name: Arm auto-merge
