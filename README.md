@@ -9,7 +9,7 @@ Org-wide defaults for every repository in [`patron-studio`](https://github.com/p
 | `profile/README.md`         | Public-facing org page README (visible at github.com/patron-studio)                               |
 | `SECURITY.md`               | Default vulnerability reporting policy. Picked up by any repo without its own `SECURITY.md`.      |
 | `PULL_REQUEST_TEMPLATE.md`  | Default PR template. Picked up by any repo without its own.                                       |
-| `CODEOWNERS`                | Default code owners fallback. Per-repo `CODEOWNERS` overrides.                                    |
+| `CODEOWNERS`                | Code owners for this repo only. Not inherited: a repo that wants one copies it.                   |
 | `workflow-templates/`       | "Use this template" entries that appear under _Actions → New workflow → By patron-studio_.        |
 | `.github/workflows/`        | Reusable workflows (`on: workflow_call`) that repos invoke via `uses:` — update once, all callers get it. |
 | `templates/`                | Copy-paste-able per-repo files that GitHub doesn't inherit (e.g. `dependabot.yml`).               |
@@ -21,8 +21,11 @@ for **community health files**. Any of `SECURITY.md`, `CONTRIBUTING.md`,
 `SUPPORT.md`, `PULL_REQUEST_TEMPLATE.md`, `ISSUE_TEMPLATE/*` placed here will
 apply to every repo in the org that doesn't define its own.
 
-`CODEOWNERS` in this repo also acts as a fallback. Per-repo
-`.github/CODEOWNERS` (like the one in `patron-sales-dashboard`) overrides this.
+`CODEOWNERS` is not a community health file, so it has no org fallback.
+GitHub reads it only from a repo's own root, `docs/` or `.github/`, so the one
+here covers this repo alone. With 0 approvals required on `main`
+([repo standard](docs/repo-standard.md)), code owners only decide who gets
+asked to review.
 
 Workflow templates are different — they're a starting point only. They appear
 in the Actions UI when a user clicks "New workflow", but they're never
