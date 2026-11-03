@@ -52,17 +52,16 @@ Templates: [`templates/local-ci/`](../templates/local-ci/).
 
 | Tier         | Repos                                                                                                                          | What they get                                                     |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| **Full**     | omkai, airo-storefront, slvrlake, companion, colours-agency, johns-and-co, at-rare, jelly, think-artfully, snyder, at-trayler, turbo-next-sanity-boilerplate | All of the above                                                  |
-| **Baseline** | at-collective, dawn-website, futura-post, tbm-group, foster-son-store, foster-dev, johns-and-co_AWS, maintenance-orchestrator, automation, airo-storefront-sync, airo-storefront-email-tests | `protect-long-lived-branches` only; no CI gate                    |
+| **Full**     | omkai, airo-storefront, slvrlake, companion, colours-agency, johns-and-co, at-rare, jelly, think-artfully, snyder, at-trayler, at-collective, dawn-website, futura-post, tbm-group, turbo-next-sanity-boilerplate | All of the above                                                  |
+| **Baseline** | foster-son-store, foster-dev, johns-and-co_AWS, maintenance-orchestrator, automation, airo-storefront-sync, airo-storefront-email-tests | `protect-long-lived-branches` only; no CI gate                    |
 
 Full is every active repo with lint or typecheck scripts to run (as of 3 Nov
 2026). The boilerplate is included because every new site starts from it. A
 baseline repo moves to Full when work on it restarts, once its workflows are
 in (see below). Archived repos leave the list.
 
-Next to move up: at-collective, dawn-website, futura-post and tbm-group are
-active and have lint or typecheck scripts, but no workflows yet. tbm-group uses
-Yarn, so its `ci.yml` and `ci-local.sh` need Yarn commands.
+at-collective and tbm-group use Yarn, so their `ci.yml` and `ci-local.sh` run
+Yarn commands and `ci:local` is `yarn ci:local`.
 
 ## Rolling out to a repo
 
